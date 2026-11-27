@@ -377,6 +377,7 @@ body{margin:0;background:#0E1621}
 </style></head><body><script>
 // APK köprüsü: Android WebView blob indirmeyi desteklemez; CSV/yedek dosyalarını kaydedip paylaşım penceresini açar.
 (function(){var C=window.Capacitor;if(!C||!C.isNativePlatform||!C.isNativePlatform())return;
+var PR=C.registerPlugin('PrintBridge');window.print=function(){PR.print({title:document.title||'Evrak'}).catch(function(e){alert('Yazdırma açılamadı: '+(e&&e.message||e))})};
 var CAM=C.registerPlugin('Camera'),md=navigator.mediaDevices;
 if(md&&md.getUserMedia){var og=md.getUserMedia.bind(md);md.getUserMedia=function(c){return CAM.requestPermissions({permissions:['camera']}).catch(function(){}).then(function(){return og(c)})}}
 var FS=C.registerPlugin('Filesystem'),SH=C.registerPlugin('Share'),orig=HTMLAnchorElement.prototype.click;
