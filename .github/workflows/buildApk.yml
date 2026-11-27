@@ -69,6 +69,54 @@ jobs:
           sed -i 's#</manifest>#    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n</manifest>#' $M
           grep -n CAMERA $M
 
+      - name: Yazdırma köprüsü (Android yazdır / PDF kaydet)
+        working-directory: apk
+        run: |
+          D=android/app/src/main/java/com/dersapp/sinav
+          cat > $D/PrintBridge.java <<'JAVA'
+          package com.dersapp.sinav;
+          import android.content.Context;
+          import android.print.PrintAttributes;
+          import android.print.PrintDocumentAdapter;
+          import android.print.PrintManager;
+          import android.webkit.WebView;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+          @CapacitorPlugin(name = "PrintBridge")
+          public class PrintBridge extends Plugin {
+            @PluginMethod
+            public void print(final PluginCall call) {
+              final String title = call.getString("title", "Evrak");
+              getActivity().runOnUiThread(() -> {
+                try {
+                  WebView wv = getBridge().getWebView();
+                  PrintManager pm = (PrintManager) getActivity().getSystemService(Context.PRINT_SERVICE);
+                  PrintDocumentAdapter a = wv.createPrintDocumentAdapter(title);
+                  pm.print(title, a, new PrintAttributes.Builder().build());
+                  call.resolve();
+                } catch (Exception e) {
+                  call.reject(String.valueOf(e.getMessage()));
+                }
+              });
+            }
+          }
+          JAVA
+          cat > $D/MainActivity.java <<'JAVA'
+          package com.dersapp.sinav;
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+          public class MainActivity extends BridgeActivity {
+            @Override
+            public void onCreate(Bundle savedInstanceState) {
+              registerPlugin(PrintBridge.class);
+              super.onCreate(savedInstanceState);
+            }
+          }
+          JAVA
+          ls $D
+
       - name: Senkronla ve APK derle
         working-directory: apk
         run: |
